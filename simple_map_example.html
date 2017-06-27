@@ -1,0 +1,41 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>simple Map</title>
+    <script src="https://apis.skplanetx.com/tmap/js?version=1&format=javascript&appKey=***** app key *****"></script>
+    <script type="text/javascript">
+        var map;
+        var mapW, mapH; // 지도의 가로, 세로 크기(Pixel단위) 를 지정 합니다. 
+        var cLonLat, zoom; //중심 좌표와 지도레벨을 정의 합니다. 
+
+        function setVariables() {
+            cLonLat = new Tmap.LonLat(14135912.880612050, 4518334.160091842);
+            //중심점 좌표 입니다. EPSG3857 좌표계 형식 입니다. 
+            zoom = 16; // zoom level입니다.  0~19 레벨을 서비스 하고 있습니다. 
+            mapW = '500px'; // 지도의 가로 크기 입니다. 
+            mapH = '400px'; // 지도의 세로 크기 입니다. 
+        }
+
+        function init() {
+            setVariables();
+            map = new Tmap.Map({
+                div: 'map_div',
+                width: mapW,
+                height: mapH,
+                animation: true
+            });
+            // div : 지도가 생성될 div의 id값과 같은 값을 옵션으로 정의 합니다.
+            // Tmap,Map 클래스에 대한 상세 사항은 "JavaScript" 하위메뉴인 "기본 기능" 페이지를 참조 해주세요. 
+
+            map.setCenter(cLonLat, zoom);
+        }
+    </script>
+</head>
+
+<body onload="init()">
+    <div id="map_div">
+    </div>
+</body>
+
+</html>
