@@ -1,0 +1,155 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+
+<head>
+    <meta charset="utf-8">
+    <title>마커 & 팝업 예제</title>
+    <style type="text/css">
+        html {
+            height: 100%
+        }
+        
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0
+        }
+        
+        #map_canvas {
+            height: 100%
+        }
+    </style>
+    <script language="javascript" type="text/javascript" src="/js/enc_login.js"></script>
+    <script src="https://apis.skplanetx.com/tmap/js?version=1&format=javascript&appKey=***** app key *****"></script>
+    </script>
+    <script type="text/javascript">
+        var map;
+
+        function init() {                                
+            map = new Tmap.Map({
+                div: 'map_canvas',
+                width: '100%',
+                height: '100%',
+                transitionEffect: "resize",
+                animation: true
+            });
+
+            getPositionNow();
+            setMarker()
+        } 
+
+        function getPositionNow() {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(successOnGeo, failOnGeo);
+            } else {
+                failOnGeo();
+            }
+        }
+
+        // GPS 정보 가져오기
+        function successOnGeo(position) {
+            var currentLatPos = position.coords.latitude;
+            var currentLongPos = position.coords.longitude;
+
+            searchRoute(currentLatPos, currentLongPos);
+        }
+
+        // 경로 탐색 실패시 경로 안내 시작할 좌표
+        function failOnGeo(error) {
+            alert("GPS 정보를 읽는데 실패했습니다.");
+
+            var currentLatPos = 37.451079;
+            var currentLongPos = 126.656440;
+
+            searchRoute(currentLatPos, currentLongPos);
+        }
+
+        // 경로 탐색
+        function searchRoute(currentLatPos, currentLongPos) {
+            var routeFormat = new Tmap.Format.KML({
+                extractStyles: true,
+                extractAttributes: true
+            });
+
+            // 경로 안내 시작 지점
+            var startPoint = convertToEPSG4326(currentLatPos, currentLongPos);
+            var startX = startPoint.lon;
+            var startY = startPoint.lat;
+
+            // 경로 안내 종료 지점
+            var endPoint = convertToEPSG4326(37.450825956285534, 126.6542637348175);
+            var endX = endPoint.lon;
+            var endY = endPoint.lat;
+
+            // Build QueryString
+            var startName = "현 위치";
+            var endName = "목적지";
+            var urlStr = "https://apis.skplanetx.com/tmap/routes/pedestrian?version=1&format=xml";
+            urlStr += "&startX=" + startX;
+            urlStr += "&startY=" + startY;
+            urlStr += "&endX=" + endX;
+            urlStr += "&endY=" + endY;
+            urlStr += "&startName=" + encodeURIComponent(startName);
+            urlStr += "&endName=" + encodeURIComponent(endName);
+            urlStr += "reqCoordType=EPSG3857"
+            urlStr += "&appKey=***** app key *****";
+
+            // 지도 생성
+            var prtcl = new Tmap.Protocol.HTTP({
+                url: urlStr,
+                format: routeFormat
+            });
+            var routeLayer = new Tmap.Layer.Vector("route", {
+                protocol: prtcl,
+                strategies: [new Tmap.Strategy.Fixed()]
+            });
+            routeLayer.events.register("featuresadded", routeLayer, onDrawnFeatures);
+            map.addLayer(routeLayer);
+        }
+
+        // 좌표계 변환(WGS84 -> EPSG3857)
+        function convertToEPSG4326(lat, lon) {
+            var pr_3857 = new Tmap.Projection("EPSG:3857");
+            var pr_4326 = new Tmap.Projection("EPSG:4326");
+            return new Tmap.LonLat(lon, lat).transform(pr_4326, pr_3857);
+        }
+
+        //경로 그리기 후 해당영역으로 줌
+        function onDrawnFeatures(e) {
+            map.zoomToExtent(this.getDataExtent());
+        }
+
+        // 마커 그리기
+        function setMarker() {
+            var markerLayer = new Tmap.Layer.Markers("MarkerLayer");
+            map.addLayer(markerLayer);
+
+            var position = convertToEPSG4326(37.44936521473639, 126.65440857410431);
+            var positionX = position.lon;
+            var positionY = position.lat;
+
+            var lonlat = new Tmap.LonLat(positionX, positionY);
+            var size = new Tmap.Size(24, 38);
+            var offset = new Tmap.Pixel(-(size.w / 2), -size.h);
+
+            var icon = new Tmap.Icon('https://developers.skplanetx.com/upload/tmap/marker/pin_b_m_a.png', size, offset);
+            var marker = new Tmap.Marker(lonlat, icon);
+            var contents = "<div>마커</div>";
+
+            var popup = new Tmap.Popup("lablePopup", lonlat, new Tmap.Size(100, 20), contents,  false);
+            popup.autoSize = true;
+
+            markerLayer.addMarker(marker);
+            map.addPopup(popup);
+        }
+
+        window.onload = init
+    </script>
+
+</head>
+
+<body>
+
+    <div id="map_canvas" style="width:100%; height:100%"></div>
+</body>
+
+</html>
